@@ -1,0 +1,20 @@
+version: '3'
+
+services:
+  node-server:
+    build:
+      context: .
+      dockerfile: Dockerfile.build
+    ports:
+      - 3000:3000
+    volumes:
+      # Don't connect all directories or files as volumes
+      # otherwise there is no caching on node_modules which must be a subdir
+      - "./src:/app/src"
+      - "./Makefile:/app/Makefile"
+      - "./package.json:/app/package.json"
+      - "./yarn.lock:/app/yarn.lock"
+      - "./tsconfig.json:/app/tsconfig.json"
+      - "./tslint.json:/app/tslint.json"
+    tty: true
+    working_dir: /app
