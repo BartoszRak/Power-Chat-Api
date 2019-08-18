@@ -1,7 +1,7 @@
 import * as sinon from 'sinon';
 import * as admin from 'firebase-admin';
 
-import { FirestoreClient } from './firestore-client';
+import { FirestoreClient } from './firestore.client';
 
 describe('Firestore client', () => {
   let sandbox: sinon.sandbox;
