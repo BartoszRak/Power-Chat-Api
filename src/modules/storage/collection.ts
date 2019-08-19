@@ -31,6 +31,9 @@ export abstract class Collection<TDocument extends Document> {
   }
 
   public async delete(documentId: string): Promise<boolean> {
+    if (documentId) {
+      throw new Error('Cannot delete document when ID is not provided.')
+    }
     await this.baseQuery()
       .doc(documentId)
       .delete();
@@ -38,6 +41,9 @@ export abstract class Collection<TDocument extends Document> {
   }
 
   public async update(data: TDocument): Promise<boolean> {
+    if (data.id) {
+      throw new Error('Cannot update document when ID is not provided.')
+    }
     data.updatedAt = this.db.timestamp;
     await this.baseQuery()
       .doc(data.id)
@@ -51,6 +57,14 @@ export abstract class Collection<TDocument extends Document> {
     const ref: admin.firestore.DocumentReference = await this.baseQuery()
       .add(data);
     return ref.id;
+  }
+
+  public async set(data: TDocument): Promise<boolean> {
+    if (data.id) {
+      throw new Error('Cannot set document when ID is not provided.')
+    }
+    await this.baseQuery().doc(data.id).set(data)
+    return true
   }
 
   public async get(documentId: string): Promise<TDocument> {

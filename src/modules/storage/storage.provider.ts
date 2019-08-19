@@ -1,5 +1,6 @@
 import { StorageService } from './storage.service';
-import { UserCollection } from './entities/users/user.collection'
+import { UserCollection } from './entities/users/user.collection';
+import { AuthCollection } from './entities/auth/auth.collection';
 
 export const storageProviders: any[] = [
   {
@@ -13,8 +14,15 @@ export const storageProviders: any[] = [
   {
     provide: 'UserCollection',
     useFactory: (storage: StorageService): UserCollection => {
-      return new UserCollection(storage)
+      return new UserCollection(storage);
     },
-    inject: [ 'StorageService' ],
-  }
+    inject: ['StorageService'],
+  },
+  {
+    provide: 'AuthCollection',
+    useFactory: (storage: StorageService): AuthCollection => {
+      return new AuthCollection(storage);
+    },
+    inject: ['StorageService'],
+  },
 ];
