@@ -1,6 +1,6 @@
 # secrets
-**/service-account-*.json
-**/power-chat-dev.json
+**/*/service-account-*.json
+**/*/power-chat-dev.json
 
 # compiled output
 /dist
