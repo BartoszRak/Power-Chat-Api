@@ -9,7 +9,7 @@ export class UserDocument extends Document {
   public description?: string = 'Hello, I am new!';
   public email: string = null
   public thumbnailUrl?: string = null;
-  public isActive?: boolean = false
+  public isActivated?: boolean = false
   public isResettingPassword?: boolean = false
   constructor(data: UserDocument) {
     super();

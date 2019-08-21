@@ -21,7 +21,11 @@ export abstract class Collection<TDocument extends Document> {
     return this;
   }
 
-  public where(field: string, operator: '==' | '<=' | '>=' | 'array-contains' | '>' | '<', value: any): this {
+  public where(
+    field: string,
+    operator: '==' | '<=' | '>=' | 'array-contains' | '>' | '<',
+    value: any,
+  ): this {
     this.__whereStatements = [
       ...this.__whereStatements,
       { field: field, operator: operator, value: value } as WhereStatement,
@@ -45,14 +49,15 @@ export abstract class Collection<TDocument extends Document> {
   }
 
   public async update(data: TDocument): Promise<boolean> {
-    if (data.id) {
+    if (!data.id) {
       throw new Error('Cannot update document when ID is not provided.');
     }
-    delete data.id;
     data.updatedAt = this.db.timestamp;
+    const newData: TDocument = { ...data };
+    delete newData.id;
     await this.baseQuery()
       .doc(data.id)
-      .set(data);
+      .update(newData);
     return true;
   }
 
@@ -72,15 +77,14 @@ export abstract class Collection<TDocument extends Document> {
     if (!data.id) {
       throw new Error('Cannot set document when ID is not provided.');
     }
-    const id: string = data.id;
-    delete data.id;
     const newData: TDocument = {
       ...data,
       createdAt: this.db.timestamp,
       updatedAt: this.db.timestamp,
     };
+    delete newData.id;
     await this.baseQuery()
-      .doc(id)
+      .doc(data.id)
       .set(newData);
     return true;
   }
@@ -138,7 +142,10 @@ export abstract class Collection<TDocument extends Document> {
           );
         }
       });
-    } else if (this.__whereStatements.length === 0 && this.__orderByStatements.length !== 0) {
+    } else if (
+      this.__whereStatements.length === 0 &&
+      this.__orderByStatements.length !== 0
+    ) {
       this.__orderByStatements.forEach((orderByStatement: OrderByStatement) => {
         query = query.orderBy(
           orderByStatement.field,
@@ -150,7 +157,7 @@ export abstract class Collection<TDocument extends Document> {
     if (this.__limit) {
       query.limit(this.__limit);
     }
-    
+
     return query;
   }
 }
