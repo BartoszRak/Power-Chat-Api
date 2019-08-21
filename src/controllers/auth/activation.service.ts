@@ -18,7 +18,7 @@ export class ActivationService {
     private readonly notificationsService: NotificationsService,
   ) {}
 
-  public async requestActivation(email: string): Promise<void> {
+  public async requestActivation(email: string): Promise<boolean> {
     const activationSecret: string = uuidv4();
     const activationData: HashSaltPair = await this.jwtService.generateHashAndSalt(
       `${email}${activationSecret}`,
@@ -28,8 +28,10 @@ export class ActivationService {
       .where('email', '==', email)
       .getAll();
     const user: UserDocument = usersWithSameEmail[0];
-    if (!user || user.isActivated) {
-      throw new Error('Account with provided email cannot be activated.');
+    if (!user || user.isWaitingForActivation || user.isActivated) {
+      throw new Error(
+        'Activation request for account with provided email cannot be executed.',
+      );
     }
     const auth: AuthDocument = await this.authCollection.get(user.id);
     await this.authCollection.update(
@@ -40,10 +42,55 @@ export class ActivationService {
         activationSalt: activationData.salt,
       }),
     );
+    await this.userCollection.update(
+      new UserDocument({
+        ...user,
+        isWaitingForActivation: true,
+      }),
+    );
 
     await this.notificationsService.sendActivationEmail(
       email,
       activationSecret,
     );
+    return true;
+  }
+
+  public async activate(email: string, secret: string) {
+    const usersWithSameEmail: UserDocument[] = await this.userCollection
+      .limit(1)
+      .where('email', '==', email)
+      .getAll();
+    const user: UserDocument = usersWithSameEmail[0];
+    if (!user || user.isActivated || !user.isWaitingForActivation) {
+      throw new Error('Account with provided email cannot be activated.');
+    }
+    const auth: AuthDocument = await this.authCollection.get(user.id);
+
+    const isSecretValid: boolean = await this.jwtService.checkWord(
+      `${email}${secret}`,
+      auth.activationSalt,
+      auth.activationHash,
+    );
+    if (!isSecretValid) {
+      throw new Error('Provided activation token is invalid');
+    }
+
+    await this.authCollection.update(
+      new AuthDocument({
+        ...auth,
+        id: user.id,
+        activationHash: null,
+        activationSalt: null,
+      }),
+    );
+    await this.userCollection.update(
+      new UserDocument({
+        ...user,
+        isActivated: true,
+        isWaitingForActivation: false,
+      }),
+    );
+    return true;
   }
 }
